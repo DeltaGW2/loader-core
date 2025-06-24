@@ -14,11 +14,19 @@ typedef HRESULT(WINAPI* DXGIDebugInterfaceGet1)(UINT Flags, REFIID riid, void** 
 HMODULE target_lib = 0;
 const wchar_t* target_lib_name = L"addonLoader.dll";
 
+/* proto */
+HMODULE GetDXGIModule();
+
 void* getTargetProc(const char* procName)
 {
     if (!target_lib)
     {
         target_lib = LoadLibrary(target_lib_name);
+    }
+
+    if (!target_lib)
+    {
+        target_lib = GetDXGIModule();
     }
 
     return GetProcAddress(target_lib, procName);
@@ -27,24 +35,40 @@ void* getTargetProc(const char* procName)
 HRESULT WINAPI CreateDXGIFactory(REFIID riid, void** ppFactory)
 {
     DXGIFactoryCreate0 fun = (DXGIFactoryCreate0)getTargetProc("CreateDXGIFactory");
+
+    if (!fun)
+        return E_HANDLE;
+
     return fun(riid, ppFactory);
 }
 
 HRESULT WINAPI CreateDXGIFactory1(REFIID riid, void** ppFactory)
 {
     DXGIFactoryCreate1 fun = (DXGIFactoryCreate1)getTargetProc("CreateDXGIFactory1");
+
+    if (!fun)
+        return E_HANDLE;
+
     return fun(riid, ppFactory);
 }
 
 HRESULT WINAPI CreateDXGIFactory2(UINT Flags, REFIID riid, void** ppFactory)
 {
     DXGIFactoryCreate2 fun = (DXGIFactoryCreate2)getTargetProc("CreateDXGIFactory2");
+
+    if (!fun)
+        return E_HANDLE;
+
     return fun(Flags, riid, ppFactory);
 }
 
 HRESULT DXGIGetDebugInterface1(UINT Flags, REFIID riid, void** pDebug)
 {
     DXGIDebugInterfaceGet1 fun = (DXGIDebugInterfaceGet1)getTargetProc("DXGIGetDebugInterface1");
+
+    if (!fun)
+        return E_HANDLE;
+
     return fun(Flags, riid, pDebug);
 }
 
@@ -84,6 +108,10 @@ extern "C" BOOL WINAPI CompatValue(LPCSTR szName, UINT64 *pValue)
 {
     if(ShouldTryLoading)
         LoadAllFunctions();
+
+    if (!RealCompatValue)
+        return E_HANDLE;
+
     return RealCompatValue(szName, pValue);
 }
 
@@ -91,6 +119,10 @@ extern "C" BOOL WINAPI CompatString(LPCSTR szName, ULONG *pSize, LPSTR lpData, b
 {
     if(ShouldTryLoading)
         LoadAllFunctions();
+
+    if (!RealCompatString)
+        return E_HANDLE;
+
     return RealCompatString(szName, pSize, lpData, Flag);
 }
 

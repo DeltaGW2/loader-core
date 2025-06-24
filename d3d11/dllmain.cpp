@@ -33,11 +33,19 @@ typedef HRESULT(WINAPI* D3D11CreateDeviceAndSwapChainFunc)(IDXGIAdapter* pAdapte
 HMODULE target_lib = 0;
 const wchar_t* target_lib_name = L"addonLoader.dll";
 
+/* proto */
+HMODULE GetD3D11Module();
+
 void* getTargetProc(const char* procName)
 {
     if (!target_lib)
     {
         target_lib = LoadLibrary(target_lib_name);
+    }
+
+    if (!target_lib)
+    {
+        target_lib = GetD3D11Module();
     }
 
     return GetProcAddress(target_lib, procName);
@@ -52,6 +60,9 @@ extern "C" HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter * pAdapter, D3D_DRIVER_
 extern "C" HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter * pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, const D3D_FEATURE_LEVEL * pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, const DXGI_SWAP_CHAIN_DESC * pSwapChainDesc, IDXGISwapChain * *ppSwapChain, ID3D11Device * *ppDevice, D3D_FEATURE_LEVEL * pFeatureLevel, ID3D11DeviceContext * *ppImmediateContext)
 {
     D3D11CreateDeviceAndSwapChainFunc fun = (D3D11CreateDeviceAndSwapChainFunc)getTargetProc("D3D11CreateDeviceAndSwapChain");
+    
+    if (!fun)
+        return E_HANDLE;
 
     return fun(pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, pSwapChainDesc, ppSwapChain, ppDevice, pFeatureLevel, ppImmediateContext);
 }
@@ -98,6 +109,10 @@ extern "C" HRESULT WINAPI D3D11CoreCreateDevice(
 {
     if(ShouldTryLoading)
         LoadAllFunctions();
+
+    if (!RealD3D11CoreCreateDevice)
+        return E_HANDLE;
+
     return RealD3D11CoreCreateDevice(pFactory, pAdapter, Flags, pFeatureLevels, FeatureLevels, ppDevice);
 }
 
@@ -110,6 +125,10 @@ extern "C" HRESULT WINAPI D3D11CoreCreateLayeredDevice(
 {
     if(ShouldTryLoading)
         LoadAllFunctions();
+
+    if (!RealD3D11CoreCreateLayeredDevice)
+        return E_HANDLE;
+
     return RealD3D11CoreCreateLayeredDevice(unknown0, unknown1, unknown2, riid, ppvObj);
 }
 
@@ -117,6 +136,10 @@ extern "C" SIZE_T WINAPI D3D11CoreGetLayeredDeviceSize(const void* unknown0, DWO
 {
     if(ShouldTryLoading)
         LoadAllFunctions();
+
+    if (!RealD3D11CoreGetLayeredDeviceSize)
+        return E_HANDLE;
+
     return RealD3D11CoreGetLayeredDeviceSize(unknown0, unknown1);
 }
 
@@ -124,6 +147,10 @@ extern "C" HRESULT WINAPI D3D11CoreRegisterLayers(const void* unknown0, DWORD un
 {
     if(ShouldTryLoading)
         LoadAllFunctions();
+
+    if (!RealD3D11CoreRegisterLayers)
+        return E_HANDLE;
+
     return RealD3D11CoreRegisterLayers(unknown0, unknown1);
 }
 
